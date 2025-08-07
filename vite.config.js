@@ -8,4 +8,14 @@ export default defineConfig({
     tailwindcss(),
 
   ],
+
+   preview: {
+    host: true,
+    allowedHosts: ['bookstore-owzt.onrender.com']
+   },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 })
