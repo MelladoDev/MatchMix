@@ -6,16 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(),
     tailwindcss(),
-
   ],
 
-   preview: {
-    host: true,
-    allowedHosts: ['bookstore-owzt.onrender.com']
-   },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
+  
 })
