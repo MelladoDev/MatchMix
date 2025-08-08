@@ -247,15 +247,19 @@ export const GlobalProvider = ({ children }) => {
     if (!user) return showAlert("Inicia sesión primero.", "warning");
     if (!code) return showAlert("Ingresa un código válido.", "failure");
 
-    const { data: couple, error } = await supabase
-      .from("parejas")
-      .select("id, nombre, invite_code")
-      .eq("invite_code", code.toUpperCase())
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("join_pareja_by_code", {
+      p_code: code,
+    });
 
-    if (error || !couple) {
-      return showAlert("No encontramos una pareja con ese código.", "failure");
-    }
+    if (error) return showAlert(error.message, "failure");
+
+    // data devuelve [{ id, nombre, invite_code }]
+    const couple = data?.[0] ?? null;
+    if (!couple) return showAlert("Código inválido.", "failure");
+
+    setPair(couple);
+    setProfile((p) => ({ ...p, pareja_id: couple.id }));
+    showAlert("¡Pareja conectada!", "success");
 
     // Asignar al usuario
     const { error: updErr } = await supabase
@@ -268,6 +272,153 @@ export const GlobalProvider = ({ children }) => {
     setProfile((p) => ({ ...p, pareja_id: couple.id }));
     showAlert("¡Pareja conectada!", "success");
   };
+
+// === TMDB core ===
+const TMDB_TOKEN = import.meta.env.VITE_TMDB_TOKEN;
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const IMG = (p, size = "w500") => (p ? `https://image.tmdb.org/t/p/${size}${p}` : "/placeholder.jpg");
+
+// cache simple en memoria
+const tmdbCache = new Map(); // key -> { v, t }
+
+/** Fetch con cache y soporte de AbortController */
+const tmdbFetch = async (endpoint, { ttlMs = 60_000, signal } = {}) => {
+  const key = endpoint;
+  const now = Date.now();
+  const cached = tmdbCache.get(key);
+  if (cached && now - cached.t < ttlMs) return cached.v;
+
+  const res = await fetch(`${TMDB_BASE_URL}${endpoint}`, {
+    headers: { Authorization: `Bearer ${TMDB_TOKEN}`, accept: "application/json" },
+    signal,
+  });
+  if (!res.ok) throw new Error(`Error en TMDB: ${res.status} (${endpoint})`);
+  const json = await res.json();
+  tmdbCache.set(key, { v: json, t: now });
+  return json;
+};
+
+// Endpoints de uso común
+const tmdb = {
+  trending: (window = "day", opt) =>
+    tmdbFetch(`/trending/all/${window}?language=es-ES`, opt),
+  search: (q, page = 1, opt) =>
+    tmdbFetch(`/search/multi?language=es-ES&page=${page}&query=${encodeURIComponent(q)}`, opt),
+  details: (type, id, opt) =>
+    tmdbFetch(`/${type}/${id}?language=es-ES&append_to_response=videos,credits`, opt),
+};
+
+  // Funcion para homogeneizar la info de tmdb
+  const normalizeItem = (r) => {
+    const media_type = r.media_type || (r.first_air_date ? "tv" : "movie");
+    const title = r.title || r.name || "(Sin título)";
+    return {
+      id: r.id,
+      media_type, // 'movie' | 'tv'
+      title,
+      overview: r.overview ?? "",
+      poster: IMG(r.poster_path, "w342"),
+      backdrop: IMG(r.backdrop_path, "w780"),
+      rating: r.vote_average ?? null,
+      date: r.release_date || r.first_air_date || null,
+      genres: r.genres?.map((g) => g.name) ?? [],
+    };
+  };
+  // Agregar un ítem (desde TMDB) a la lista de la pareja
+  const addToList = async (tmdbItem) => {
+    if (!user || !profile?.pareja_id)
+      return showAlert("Conecta una pareja primero.", "warning");
+    const it = normalizeItem(tmdbItem);
+
+    const { error } = await supabase.from("listas").insert([
+      {
+        pareja_id: profile.pareja_id,
+        tmdb_id: it.id,
+        media_type: it.media_type,
+        estado: "agregada",
+        agregado_por: user.id,
+      },
+    ]);
+
+    if (error) {
+      if (error.message?.includes("uq_listas_pareja_tmdb_media"))
+        return showAlert("Ya está en la lista.", "info");
+      return showAlert(error.message, "failure");
+    }
+    showAlert("Agregado a la lista 💜", "success");
+  };
+
+  // Traer la lista y “hidratar” con detalles de TMDB (incluye normalización)
+  const getCoupleList = async () => {
+    if (!profile?.pareja_id) return [];
+    const { data, error } = await supabase
+      .from("listas")
+      .select("*")
+      .eq("pareja_id", profile.pareja_id)
+      .order("fecha_agregado", { ascending: false });
+
+    if (error) {
+      showAlert(error.message, "failure");
+      return [];
+    }
+
+    const hydrated = await Promise.all(
+      (data || []).map(async (row) => {
+        try {
+          const det = await tmdb.details(row.media_type, row.tmdb_id);
+          return { ...row, tmdb: normalizeItem(det) };
+        } catch {
+          return { ...row, tmdb: null }; // fallback si TMDB falla
+        }
+      })
+    );
+    return hydrated;
+  };
+
+  const setListStatus = async (id, estado) => {
+    const { error } = await supabase
+      .from("listas")
+      .update({ estado })
+      .eq("id", id);
+    if (error) showAlert(error.message, "failure");
+  };
+
+  const deleteFromList = async (id) => {
+    const { error } = await supabase.from("listas").delete().eq("id", id);
+    if (error) showAlert(error.message, "failure");
+  };
+  // Citas: crear / listar / eliminar
+const addCita = async (isoDate) => {
+  if (!user || !profile?.pareja_id) return showAlert("Conecta una pareja primero.", "warning");
+  const { error } = await supabase.from("citas").insert([{
+    pareja_id: profile.pareja_id,
+    fecha: isoDate,          // 'YYYY-MM-DD'
+    agregado_por: user.id
+  }]);
+  if (error) {
+    if (error.message?.includes("uq_citas_fecha_pareja"))
+      return showAlert("Esa fecha ya estaba agendada.", "info");
+    return showAlert(error.message, "failure");
+  }
+  showAlert("Cita agregada ✅", "success");
+};
+
+const listCitas = async () => {
+  if (!profile?.pareja_id) return [];
+  const { data, error } = await supabase
+    .from("citas")
+    .select("id, fecha, agregado_por, created_at")
+    .eq("pareja_id", profile.pareja_id)
+    .order("fecha", { ascending: true });
+  if (error) { showAlert(error.message, "failure"); return []; }
+  // opcional: mapea con nombre del agregador si ya lo tienes en memoria:
+  return data;
+};
+
+const deleteCita = async (id) => {
+  const { error } = await supabase.from("citas").delete().eq("id", id);
+  if (error) return showAlert(error.message, "failure");
+};
 
   return (
     <GlobalContext.Provider
@@ -287,6 +438,15 @@ export const GlobalProvider = ({ children }) => {
         pair,
         createOrGetPairCode,
         joinPairByCode,
+        tmdb,
+        normalizeItem,
+        addToList,
+        getCoupleList,
+        setListStatus,
+        deleteFromList,
+        addCita,
+        listCitas,
+        deleteCita,
       }}
     >
       {children}

@@ -9,15 +9,16 @@ import LoginModal from '../components/LoginModal'
 import Toast from '../components/Toast'
 import ProfileButton from "../components/ProfileButton";
 import PairModal from "../components/PairModal";
+import BuscadorTMDB from "../components/BuscadorTMDB";
 
 const Home = () => {
 
  const { showLogin, setShowLogin, alert, setAlert, user } = useContext(GlobalContext);
 const [showPair, setShowPair] = useState(false);
- 
+const cardStyle = "bg-indigo-300/50 rounded-xl p-4 shadow-black/60 shadow-xl h-fit ";
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-purple-300 via-purple-200 to-pink-200">
-      <h1 className="text-3xl font-bold text-white mb-6 text-center drop-shadow-lg">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-violet-900 via-violet-950 to-purple-900 ">
+      <h1 className="text-5xl font-bold text-white mb-6 text-center  ">
         💞 MatchMix
       </h1>
 
@@ -37,24 +38,28 @@ const [showPair, setShowPair] = useState(false);
       {/* Solo se muestra si showLogin es true */}
       {showLogin && <LoginModal />}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 z-10">
-        <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4 shadow-lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_0.5fr_1fr] auto-rows-min gap-10 z-10">
+        <div className={`col-start-1 row-start-1 row-span-2 ${cardStyle}`}>
           <Ruleta />
         </div>
 
-        <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4 shadow-lg">
+        <div className={`col-start-2 row-start-1 h-fit ${cardStyle}`}>
+          <BuscadorTMDB />
+        </div>
+
+        <div className={`col-start-2 row-start-2 ${cardStyle}`}>
+          <Plataformas />       
+        </div>
+
+        <div className={`col-start-3 row-start-1 ${cardStyle}`}>
           <ListaPeliculas />
         </div>
 
-        <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4 shadow-lg">
-          <Plataformas />
-        </div>
-
-        <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4 shadow-lg">
+        <div className={`col-start-1 row-start-3  ${cardStyle}`}>
           <ListaSeries />
         </div>
 
-        <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4 shadow-lg">
+        <div className={`col-start-2 row-start-3 ${cardStyle}`}>
           <CalendarioCita />
         </div>
       </div>

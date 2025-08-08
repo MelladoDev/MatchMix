@@ -1,5 +1,20 @@
 @import "tailwindcss";
+
 body {
   font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #d8b4fe, #fbcfe8);
+}
+
+.racing-sans-one-regular {
+  font-family: "Racing Sans One", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+h1, h2, h3 {
+  font-family: "Racing Sans One", sans-serif;
+  font-weight: 400;
+  color:#eef2ff;
+  -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.697);
+  text-shadow: 2px 4px 7px #000;
 }

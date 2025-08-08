@@ -1,15 +1,20 @@
-const CardPelicula = () => {
+const IMG = "https://image.tmdb.org/t/p/w300";
+
+export default function CardPelicula({ movie }) {
+  if (!movie) return null;
+
+  const title = movie.title || movie.name; // movie vs tv
+  const poster = movie.poster_path ? `${IMG}${movie.poster_path}` : "/placeholder.jpg";
+  const date = movie.release_date || movie.first_air_date || "—";
+
   return (
-    <div className="p-4 rounded-xl bg-white/20 shadow-lg">
-      <h2 className="text-xl font-bold mb-2">🎬 Película Destacada</h2>
+    <div className="p-4 rounded-xl bg-indigo-300/50 shadow-lg">
+      <h3 className="text-lg font-bold mb-2">{title}</h3>
       <div className="bg-white/10 p-2 rounded-lg">
-        <img src="/placeholder.jpg" alt="Poster" className="rounded-md mb-2" />
-        <p className="font-semibold">Título: Ejemplo</p>
-        <p>Plataforma: Netflix</p>
-        <p>Género: Drama</p>
+        <img src={poster} alt={title} className="rounded-md mb-2" />
+        <p className="font-semibold">Fecha: {date}</p>
+        <p>Rating: {movie.vote_average?.toFixed(1) ?? "—"}</p>
       </div>
     </div>
-  )
+  );
 }
-
-export default CardPelicula

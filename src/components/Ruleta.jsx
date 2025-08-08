@@ -23,7 +23,7 @@ const Ruleta = ({ itemsFiltrados }) => {
 
   return (
     <div className="text-white">
-      <h2 className="text-xl font-bold mb-4">🎯 Ruleta de Recomendaciones</h2>
+      <h2 className="text-3xl font-bold mb-4">🎯 Ruleta de Recomendaciones</h2>
 
       {data.length > 0 ? (
         <>
