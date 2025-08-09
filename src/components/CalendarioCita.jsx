@@ -30,21 +30,23 @@ export default function CalendarioCita() {
     await reload();
   };
   return (
-    <div className="p-4">
+ <div className="flex h-full min-h-0 flex-col overflow-hidden relative z-0 p-4">
       <h2 className="text-3xl mb-3">📅 Próxima Cita</h2>
 
-      {/* Calendario siempre visible */}
-      <DayPicker
-        className="bg-indigo-200/30 p-2 rounded-xl shadow-md shadow-black/50"
-        mode="single"
-        selected={selected}
-        onSelect={onSelectDay} // fija la fecha
-        disabled={{ before: new Date() }} // evita fechas pasadas
-        weekStartsOn={1} // comienza en lunes
-      />
+      {/* Calendario: no scrollea, altura natural */}
+      <div className="shrink-0">
+        <DayPicker
+          className="bg-indigo-200/30 p-2 rounded-xl shadow-md shadow-black/50"
+          mode="single"
+          selected={selected}
+          onSelect={onSelectDay}
+          disabled={{ before: new Date() }}
+          weekStartsOn={1}
+        />
+      </div>
 
-      {/* Mostrar fecha seleccionada + eliminar */}
-      <div className="mt-4 space-y-2">
+      {/* Lista: ocupa el resto y scrollea */}
+      <div className="mt-4 flex-1 min-h-0 overflow-auto overscroll-contain space-y-2 pr-1">
         {citas.length === 0 && (
           <p className="text-sm text-white/80">
             No hay fechas aún. Elige una en el calendario.
@@ -62,7 +64,6 @@ export default function CalendarioCita() {
                 <span className="text-lg font-semibold capitalize">
                   {fmtLabel(dateObj)}
                 </span>
-                {/* Si quieres indicar quién agregó: */}
                 <span className="text-xs text-white/70">
                   Agregada por: {c.agregado_por === user?.id ? "Tú" : "Pareja"}
                 </span>

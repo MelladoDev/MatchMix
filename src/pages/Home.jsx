@@ -15,14 +15,14 @@ const Home = () => {
 
  const { showLogin, setShowLogin, alert, setAlert, user } = useContext(GlobalContext);
 const [showPair, setShowPair] = useState(false);
-const cardStyle = "bg-indigo-300/50 rounded-xl p-4 shadow-black/60 shadow-xl h-fit ";
+const cardStyle = "bg-indigo-300/50 rounded-xl p-4 shadow-black/60 shadow-xl flex justify-center  items-center ";
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-violet-900 via-violet-950 to-purple-900 ">
+    <div className=" p-6 bg-gradient-to-br from-violet-900 via-violet-950 to-purple-900 overflow-auto ">
       <h1 className="text-5xl font-bold text-white mb-6 text-center  ">
         💞 MatchMix
       </h1>
 
-<div className="relative z-10 mb-5 text-center">
+<div className="relative mb-5 text-center">
  {!user ? (
           <button
             onClick={() => setShowLogin(true)}
@@ -35,34 +35,37 @@ const cardStyle = "bg-indigo-300/50 rounded-xl p-4 shadow-black/60 shadow-xl h-f
         )}
       </div>
 
-      {/* Solo se muestra si showLogin es true */}
+
       {showLogin && <LoginModal />}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_0.5fr_1fr] auto-rows-min gap-10 z-10">
-        <div className={`col-start-1 row-start-1 row-span-2 ${cardStyle}`}>
-          <Ruleta />
-        </div>
-
-        <div className={`col-start-2 row-start-1 h-fit ${cardStyle}`}>
-          <BuscadorTMDB />
-        </div>
-
-        <div className={`col-start-2 row-start-2 ${cardStyle}`}>
-          <Plataformas />       
-        </div>
-
-        <div className={`col-start-3 row-start-1 ${cardStyle}`}>
+      <div className='flex h-screen w-full items-center justify-center p-4'>
+      <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 lg:grid-flow-dense  lg:grid-cols-12 lg:grid-rows-6 gap-10  ">
+        <div className={`col-span-4 row-span-5 ${cardStyle}`}>
           <ListaPeliculas />
         </div>
 
-        <div className={`col-start-1 row-start-3  ${cardStyle}`}>
-          <ListaSeries />
+        <div className={`col-span-4 row-span-1   ${cardStyle}`}>
+          <BuscadorTMDB />
         </div>
 
-        <div className={`col-start-2 row-start-3 ${cardStyle}`}>
+        <div className={` col-span-4 row-span-4  ${cardStyle}`}>
+          <Ruleta />
+        </div>
+
+        <div className={`col-span-3 row-span-2  ${cardStyle}`}>
+          <Plataformas />       
+        </div>
+
+        <div className={`col-span-3 row-span-3  ${cardStyle}`}>
           <CalendarioCita />
         </div>
+
+        {/* <div className={`col-span-4 row-span-1 ${cardStyle}`}>
+          <ListaSeries />
+        </div> */}
+
       </div>
+      </div>
+
       <PairModal open={showPair} onClose={() => setShowPair(false)} />
       <Toast alert={alert} onClose={() => setAlert(null)} />
     </div>
